@@ -32,7 +32,7 @@ function matches(project: StaffProject, filters: ProjectFilters): boolean {
   const query = filters.query.trim().toLowerCase();
   if (query && !haystack(project).includes(query)) return false;
   if (filters.skill && !project.skills.includes(filters.skill)) return false;
-  if (filters.status !== 'all' && project.status !== filters.status) return false;
+  if (!filters.includeClosed && project.status !== 'available') return false;
   if (filters.nda === 'required' && !project.ndaRequired) return false;
   if (filters.nda === 'none' && project.ndaRequired) return false;
   return true;
@@ -204,7 +204,7 @@ export default function StaffProjectsPage() {
               />
             )
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex flex-col gap-4">
               {visible.map((project, index) => (
                 <ProjectCard
                   key={project.id}

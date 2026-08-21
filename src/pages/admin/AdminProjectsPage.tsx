@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FolderPlus, Funnel, MagnifyingGlass, Plus } from '@phosphor-icons/react';
-import type { AdminProject, Meta, ProjectStatus } from '@/src/lib/types';
+import type { AdminProject, Meta } from '@/src/lib/types';
 import { api, ApiError } from '@/src/lib/api';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -13,7 +13,6 @@ import AdminProjectCard from '@/components/features/admin/AdminProjectCard';
 import ProjectForm from '@/components/features/admin/ProjectForm';
 import RosterPanel from '@/components/features/admin/RosterPanel';
 
-type StatusFilter = ProjectStatus | 'all';
 type NdaFilter = 'all' | 'required' | 'none';
 
 const ALL_SKILLS = '__all__';
@@ -25,7 +24,14 @@ export default function AdminProjectsPage() {
   const [error, setError] = useState('');
 
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  /**
+   * Closed projects are hidden by default here too, so the admin's list and
+   * the lecturers' list agree about what "the projects" means. The difference
+   * is that an admin still has to reach the closed ones to reopen them, which
+   * is why the count line always states how many are being withheld rather
+   * than leaving a project looking deleted.
+   */
+  const [includeClosed, setIncludeClosed] = useState(false);
   const [ndaFilter, setNdaFilter] = useState<NdaFilter>('all');
   const [skillFilter, setSkillFilter] = useState(ALL_SKILLS);
 
@@ -73,7 +79,7 @@ export default function AdminProjectsPage() {
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return projects.filter((project) => {
-      if (statusFilter !== 'all' && project.status !== statusFilter) return false;
+      if (!includeClosed && project.status !== 'available') return false;
       if (ndaFilter === 'required' && !project.ndaRequired) return false;
       if (ndaFilter === 'none' && project.ndaRequired) return false;
       if (
@@ -92,14 +98,18 @@ export default function AdminProjectsPage() {
         project.skills.some((skill) => skill.toLowerCase().includes(needle))
       );
     });
-  }, [projects, query, statusFilter, ndaFilter, skillFilter]);
+  }, [projects, query, includeClosed, ndaFilter, skillFilter]);
+
+  /** Stated explicitly in the count line: an admin who cannot find a project
+   *  they published should be told it is hidden, not left guessing. */
+  const closedCount = projects.filter((project) => project.status === 'closed').length;
 
   const filtersActive =
-    query.trim() !== '' || statusFilter !== 'all' || ndaFilter !== 'all' || skillFilter !== ALL_SKILLS;
+    query.trim() !== '' || includeClosed || ndaFilter !== 'all' || skillFilter !== ALL_SKILLS;
 
   function clearFilters() {
     setQuery('');
-    setStatusFilter('all');
+    setIncludeClosed(false);
     setNdaFilter('all');
     setSkillFilter(ALL_SKILLS);
   }
@@ -180,7 +190,7 @@ export default function AdminProjectsPage() {
 
       {/* Filters stay mounted while the list loads so the row does not appear
           under the grid a moment later and push it down. */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className="relative block">
           <span className="sr-only">Search projects</span>
           <MagnifyingGlass
@@ -196,17 +206,6 @@ export default function AdminProjectsPage() {
             autoComplete="off"
           />
         </label>
-
-        <Select
-          aria-label="Filter by status"
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-          options={[
-            { value: 'all', label: 'Any status' },
-            { value: 'available', label: 'Available' },
-            { value: 'closed', label: 'Closed' },
-          ]}
-        />
 
         <Select
           aria-label="Filter by NDA"
@@ -231,6 +230,32 @@ export default function AdminProjectsPage() {
       </div>
 
       {error ? <ErrorNote message={error} onRetry={load} /> : null}
+
+      {!loading && projects.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-[0.8125rem] text-[var(--ink-2)]">
+          <span>
+            Showing <strong className="font-medium text-[var(--ink)]">{visible.length}</strong> of{' '}
+            {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+          </span>
+
+          {/* Beside the number, because it changes what the number counts. */}
+          <label className="inline-flex cursor-pointer items-center gap-2 select-none">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 cursor-pointer accent-[var(--accent)]"
+              checked={includeClosed}
+              onChange={(event) => setIncludeClosed(event.target.checked)}
+            />
+            Include closed projects
+          </label>
+
+          {closedCount > 0 && !includeClosed ? (
+            <span className="text-[var(--ink-3)]">
+              {closedCount} closed {closedCount === 1 ? 'project is' : 'projects are'} hidden
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -266,7 +291,7 @@ export default function AdminProjectsPage() {
       ) : null}
 
       {!loading && visible.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="flex flex-col gap-4">
           {visible.map((project, index) => (
             <AdminProjectCard
               key={project.id}

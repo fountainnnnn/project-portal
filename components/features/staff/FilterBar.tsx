@@ -2,7 +2,6 @@ import { ArrowCounterClockwise, MagnifyingGlass } from '@phosphor-icons/react';
 
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
-import type { ProjectStatus } from '@/src/lib/types';
 
 /**
  * Filter state lives in the page, not here — the page owns the list it filters,
@@ -13,14 +12,23 @@ export interface ProjectFilters {
   query: string;
   /** '' = any skill. Values come from the projects themselves, not a fixed vocabulary. */
   skill: string;
-  status: ProjectStatus | 'all';
+  /**
+   * Closed projects are hidden by default.
+   *
+   * A lecturer opens this page to find something to join, and a closed project
+   * is one they cannot. Showing them by default buries the answer in rows that
+   * are already spoken for. They stay reachable behind the checkbox because
+   * seeing what the centre has recently placed is genuinely useful — it says
+   * what kind of work turns up here — just not what the page is *for*.
+   */
+  includeClosed: boolean;
   nda: 'all' | 'required' | 'none';
 }
 
 export const EMPTY_FILTERS: ProjectFilters = {
   query: '',
   skill: '',
-  status: 'all',
+  includeClosed: false,
   nda: 'all',
 };
 
@@ -28,7 +36,7 @@ export function isFiltered(filters: ProjectFilters): boolean {
   return (
     filters.query.trim() !== '' ||
     filters.skill !== '' ||
-    filters.status !== 'all' ||
+    filters.includeClosed !== EMPTY_FILTERS.includeClosed ||
     filters.nda !== 'all'
   );
 }
@@ -71,20 +79,6 @@ export default function FilterBar({
           />
         </div>
 
-        {/* "Available only" is the filter a lecturer reaches for first — what can
-            I still join — so it sits immediately beside the search box. */}
-        <Select
-          aria-label="Filter by status"
-          className="w-auto min-w-[10rem]"
-          value={value.status}
-          onChange={(event) => set('status', event.target.value as ProjectFilters['status'])}
-          options={[
-            { value: 'all', label: 'Any status' },
-            { value: 'available', label: 'Available only' },
-            { value: 'closed', label: 'Closed only' },
-          ]}
-        />
-
         <Select
           aria-label="Filter by skill"
           className="w-auto min-w-[11rem]"
@@ -114,6 +108,18 @@ export default function FilterBar({
           Showing <strong className="font-medium text-[var(--ink)]">{matchCount}</strong> of{' '}
           {totalCount} {totalCount === 1 ? 'project' : 'projects'}
         </span>
+
+        {/* Sits on the count line rather than among the dropdowns: it changes
+            what the number means, so it belongs beside the number. */}
+        <label className="inline-flex cursor-pointer items-center gap-2 select-none">
+          <input
+            type="checkbox"
+            className="h-3.5 w-3.5 cursor-pointer accent-[var(--accent)]"
+            checked={value.includeClosed}
+            onChange={(event) => set('includeClosed', event.target.checked)}
+          />
+          Include closed projects
+        </label>
         {isFiltered(value) && (
           <Button size="sm" variant="ghost" onClick={() => onChange(EMPTY_FILTERS)}>
             <ArrowCounterClockwise size={14} aria-hidden />

@@ -52,7 +52,7 @@ const SEED_PROJECTS = [
     title: 'Computer vision quality inspection for a precision manufacturer',
     description:
       'The client runs three production lines and inspects finished parts by eye, which is slow and inconsistent across shifts. They want a camera-based system that flags surface defects — scratches, discolouration, misaligned drilling — before parts reach packing. Scope covers a labelled dataset built from their own line footage, a model that runs on an edge device on the factory floor, and a simple operator screen showing pass/fail with the defect highlighted. Deployment hardware is the client’s to buy; the team specifies it.',
-    client: 'Undisclosed',
+    client: 'ST Engineering',
     ndaRequired: true,
     durationNote: '6 months',
     status: 'available',
@@ -71,8 +71,8 @@ const SEED_PROJECTS = [
   {
     title: 'Conversational assistant for a social service agency intake desk',
     description:
-      'A social service agency handles a high volume of first-contact enquiries, most of which are the same dozen questions about eligibility and required documents. They want an assistant on their website that answers those reliably in English and Mandarin, and hands over to a human the moment a question touches an actual case. Accuracy and a clean escalation path matter far more than breadth here — a wrong answer about eligibility is worse than no answer.',
-    client: 'Undisclosed',
+      'The client handles a high volume of first-contact enquiries, most of which are the same dozen questions about eligibility and required documents. They want an assistant on their website that answers those reliably in English and Mandarin, and hands over to a human the moment a question touches an actual case. Accuracy and a clean escalation path matter far more than breadth here — a wrong answer about eligibility is worse than no answer.',
+    client: 'NTUC Health',
     ndaRequired: true,
     durationNote: '5 months',
     status: 'available',
@@ -81,12 +81,26 @@ const SEED_PROJECTS = [
   {
     title: 'Predictive maintenance for a marine fleet operator',
     description:
-      'Engine sensor data from a coastal fleet, currently logged and never analysed. The operator wants to know which vessels are drifting toward an unplanned failure so servicing can be scheduled in port rather than at sea. Closed for now — the team is confirmed and work starts next term.',
-    client: 'Undisclosed',
+      'Engine sensor data from a harbour craft fleet, currently logged and never analysed. The operator wants to know which vessels are drifting toward an unplanned failure so servicing can be scheduled alongside rather than at sea. Closed for now — the team is confirmed and work starts next term.',
+    client: 'PSA International',
     ndaRequired: true,
     durationNote: '8 months',
     status: 'closed',
     skills: ['Predictive Maintenance', 'Sensor Data', 'Anomaly Detection', 'Python'],
+  },
+  {
+    // Kept nameless on purpose. Three of the samples above carry real client
+    // names so the card layout is exercised with the lengths it will actually
+    // meet; this one exists so the "Undisclosed" path — the reason that field
+    // has a Withhold button at all — is visible on a fresh install too.
+    title: 'Fraud signal triage for a digital payments platform',
+    description:
+      'The client’s review queue is growing faster than the team reading it, and most of what reaches a human is plainly legitimate. They want the queue ranked, so the cases most likely to be fraud surface first, along with a short plain-English reason for each ranking that a reviewer can sanity-check. The client cannot be named until the engagement is signed; the work itself is not sensitive.',
+    client: 'Undisclosed',
+    ndaRequired: true,
+    durationNote: '5 months',
+    status: 'available',
+    skills: ['Anomaly Detection', 'Feature Engineering', 'Model Explainability', 'Python', 'SQL'],
   },
 ];
 

@@ -18,9 +18,10 @@ export interface AdminProjectCardProps {
   onOpenRoster: (project: AdminProject) => void;
 }
 
-/** Only the first few tags go on the card; the rest are one click away in the
- *  editor. A card that grows to eight chips stops being scannable. */
-const VISIBLE_SKILLS = 5;
+/** A full-width row holds more chips than a narrow card did, but the ceiling
+ *  stays: past about eight the row stops being scannable. The rest are one
+ *  click away in the editor. */
+const VISIBLE_SKILLS = 8;
 
 export default function AdminProjectCard({
   project,
@@ -37,9 +38,12 @@ export default function AdminProjectCard({
   return (
     <GlowCard
       index={index}
-      className="dsac-rise flex flex-col p-5"
+      className="dsac-rise flex flex-col gap-5 p-5 lg:flex-row lg:items-stretch"
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
     >
+      {/* min-w-0 so the clamped description can shrink instead of shoving the
+          action rail off the row. */}
+      <div className="flex min-w-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={project.status} />
         {project.ndaRequired ? (
@@ -61,19 +65,19 @@ export default function AdminProjectCard({
         {project.title}
       </h3>
 
-      <div className="mt-2 flex flex-col gap-1 text-[0.875rem] text-[var(--ink-2)]">
-        <p className="flex items-start gap-2">
-          <Buildings size={16} aria-hidden className="mt-0.5 shrink-0" />
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.875rem] text-[var(--ink-2)]">
+        <span className="inline-flex items-center gap-2">
+          <Buildings size={16} aria-hidden className="shrink-0" />
           {project.client}
-        </p>
-        <p className="flex items-start gap-2">
-          <CalendarBlank size={16} aria-hidden className="mt-0.5 shrink-0" />
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <CalendarBlank size={16} aria-hidden className="shrink-0" />
           {formatDuration(project)}
-        </p>
+        </span>
       </div>
 
       {project.description ? (
-        <p className="mt-3 line-clamp-2 text-[0.875rem] leading-relaxed text-[var(--ink-2)]">
+        <p className="mt-3 line-clamp-2 max-w-[80ch] text-[0.875rem] leading-relaxed text-[var(--ink-2)]">
           {project.description}
         </p>
       ) : null}
@@ -91,9 +95,14 @@ export default function AdminProjectCard({
         </div>
       ) : null}
 
-      {/* mt-auto so every card in a row lands its action bar on the same line,
-          however long the description above it runs. */}
-      <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+      </div>
+
+      {/* The actions become a right rail on wide screens and fall back to a
+          wrapped bar below lg, where a 190px column would starve the text.
+          Stacked tight rather than spread to the row's full height: pinning
+          Delete to the bottom left it floating away from the controls it
+          belongs with, and the gap read as a rendering fault. */}
+      <div className="flex flex-wrap items-center gap-2 border-[var(--border)] pt-4 lg:w-[190px] lg:shrink-0 lg:flex-col lg:items-stretch lg:border-l lg:pt-0 lg:pl-5">
         <Button size="sm" variant="secondary" onClick={() => onOpenRoster(project)}>
           <UsersThree size={16} aria-hidden />
           Interest
@@ -109,7 +118,7 @@ export default function AdminProjectCard({
         <Button
           size="sm"
           variant="danger"
-          className="ml-auto"
+          className="ml-auto lg:mt-1 lg:ml-0"
           onClick={() => onDelete(project)}
           aria-label={`Delete ${project.title}`}
         >
