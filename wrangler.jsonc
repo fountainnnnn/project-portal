@@ -1,0 +1,71 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "project-portal",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-06",
+
+  // Hono reaches for a few Node built-ins on some code paths, and the flag is
+  // free when nothing uses them. The portal's own code deliberately does not:
+  // every node:crypto call from the Express build was rewritten against
+  // WebCrypto rather than leaned on this flag, because `scryptSync` is not
+  // among the things nodejs_compat provides. See worker/auth.ts.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The built SPA. Vite writes dist/ exactly as it does for the Express build,
+  // so one `npm run build` still serves both deployments.
+  //
+  // `run_worker_first` because /api/* has to reach the Worker; without it the
+  // asset server answers first and an API path that happens to look like a file
+  // would never arrive. The Worker then hands everything it does not own to
+  // ASSETS, and `single-page-application` turns an unknown path into
+  // index.html so /staff/projects loads on a hard refresh — the equivalent of
+  // the Express build's catch-all sendFile.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application"
+  },
+
+  // Users, projects, interests, sessions. Create it once with
+  //   wrangler d1 create project-portal
+  // and paste the id it prints below — it is an account-specific identifier, so
+  // the placeholder here cannot be a working default. Then apply the schema:
+  //   npm run cf:schema
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "project-portal",
+      "database_id": "PASTE_THE_ID_FROM_wrangler_d1_create"
+    }
+  ],
+
+  // Sweeping expired session rows was a setInterval in the Express server.
+  // There is no long-lived process here, so it becomes a scheduled trigger at
+  // the same hourly cadence. Nothing depends on it for correctness.
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+
+  // Non-secret configuration only. This file is committed — API keys and seed
+  // passwords go in with `wrangler secret put`, never here.
+  "vars": {
+    // 'deepseek' or 'openai'. See worker/ai.ts.
+    "AI_PROVIDER": "deepseek",
+    // Optional: override the provider's default model / base URL.
+    // "AI_MODEL": "",
+    // "AI_BASE_URL": "",
+
+    // Read once, by POST /api/setup, on an empty database. The passwords that
+    // go with them are secrets and have no default on this build:
+    //   wrangler secret put SEED_ADMIN_PASSWORD
+    //   wrangler secret put SEED_STAFF_PASSWORD
+    "SEED_ADMIN_EMAIL": "admin@dsac.sp.edu.sg",
+    "SEED_STAFF_EMAIL": "staff@sp.edu.sg"
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

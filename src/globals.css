@@ -1,0 +1,278 @@
+@import "tailwindcss";
+
+/*
+ * DSAC Project Portal — glow-card design system.
+ *
+ * Lifted from dsac-photo-booth so the two apps read as siblings: same SP red,
+ * same ink scale, same gradient eyebrow, same rise-in motion. Two deliberate
+ * departures from the booth:
+ *
+ *  - Hit areas return to web scale. The booth sized every control for a
+ *    touchscreen with a queue behind it; this is a desktop portal a lecturer
+ *    reads at desk distance, and kiosk-sized buttons look shouty here.
+ *  - The live-pulse keyframe is gone. A blinking dot is decoration pretending
+ *    to be status, and a project being "available" is not a live signal.
+ */
+:root {
+  /* Surfaces */
+  --shell-bg: #eff0f2;
+  --background: #f7f6f8;
+  --surface: #ffffff;
+  --card: #f8f7fa;
+  --stage: #0b0a0c;
+
+  /* Ink */
+  --ink: #17161a;
+  --ink-2: #53515b;
+  --ink-3: #a3a1ab;
+  --border: #e6e4e9;
+
+  /* Accent */
+  --accent: #e1262f; /* SP DSAC red */
+  --accent-hover: #c11f27;
+  --accent-ink: #8f1219;
+
+  /* Glow hues — pale washes only, never used as fills */
+  --glow-rose: #ff6b73;
+  --glow-amber: #ffa94d;
+  --glow-iris: #7c86f5;
+
+  /* Status — the portal's own addition. Available and closed must be legible
+     without relying on the accent, which is already spent on brand. */
+  --ok: #1f8a4c;
+  --ok-wash: #e8f5ed;
+  --muted-wash: #f0eff2;
+
+  --font-dsac-sans: Aptos, "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-dsac-mono: "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-dsac-sans);
+  --font-mono: var(--font-dsac-mono);
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-dsac-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+/* ── Gradient text ──────────────────────────────────────────────────────────
+   Eyebrows and the odd highlighted phrase only. Two or three per screen. */
+.dsac-gradient-text {
+  background: linear-gradient(90deg, var(--accent), var(--glow-amber), var(--glow-iris));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ── Glow card ──────────────────────────────────────────────────────────────
+   The booth's signature surface: a near-white panel with a coloured bloom
+   leaking from one corner. The hue rotates per card so a grid reads as varied
+   without any card being coloured. The bloom is a pseudo-element behind the
+   content, so it never tints text. */
+.dsac-glow-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease;
+  box-shadow: 0 1px 2px rgba(11, 10, 12, 0.04);
+}
+
+.dsac-glow-card::before {
+  content: "";
+  position: absolute;
+  top: -45%;
+  right: -25%;
+  width: 60%;
+  height: 130%;
+  border-radius: 50%;
+  background: var(--card-glow, var(--glow-rose));
+  opacity: 0.14;
+  filter: blur(46px);
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.dsac-glow-card > * {
+  position: relative;
+}
+
+.dsac-glow-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--card-glow, var(--glow-rose)) 40%, var(--border));
+  box-shadow:
+    0 2px 4px rgba(11, 10, 12, 0.05),
+    0 14px 34px rgba(11, 10, 12, 0.07);
+}
+
+.dsac-glow-card-interactive:hover::before {
+  opacity: 0.22;
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────────
+   Transform and opacity only, so nothing triggers layout. */
+@keyframes dsac-orb-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(4vw, -3vh, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-3vw, 3vh, 0) scale(0.95);
+  }
+}
+
+@keyframes dsac-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(16%, -14%, 0) scale(1.18);
+  }
+  66% {
+    transform: translate3d(-13%, 11%, 0) scale(0.9);
+  }
+}
+
+@keyframes dsac-sheen {
+  0% {
+    transform: translate3d(-140%, 0, 0) rotate(12deg);
+  }
+  55%,
+  100% {
+    transform: translate3d(260%, 0, 0) rotate(12deg);
+  }
+}
+
+@keyframes dsac-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.dsac-rise {
+  animation: dsac-rise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes dsac-pop-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.dsac-pop-up {
+  transform-origin: top center;
+  animation: dsac-pop-up 170ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The modal scrim and panel. Kept here rather than in the component because
+   both halves have to agree on timing or the panel appears to arrive first. */
+@keyframes dsac-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dsac-fade-in {
+  animation: dsac-fade-in 160ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── Form controls ──────────────────────────────────────────────────────────
+   One rule for every text-ish input, because the portal has far more of them
+   than the booth did and per-component styling drifted immediately. */
+.dsac-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  color: var(--ink);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.dsac-input::placeholder {
+  color: var(--ink-3);
+}
+
+.dsac-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.dsac-input:disabled {
+  background: var(--muted-wash);
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
+textarea.dsac-input {
+  resize: vertical;
+  min-height: 7rem;
+  line-height: 1.55;
+}
+
+/* Native select keeps its own chevron on every platform; suppress it so the
+   Phosphor caret we draw is the only one. */
+select.dsac-input {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2.25rem;
+}
