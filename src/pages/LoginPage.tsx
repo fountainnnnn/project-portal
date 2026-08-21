@@ -19,14 +19,6 @@ import { useAuth } from '@/src/lib/auth';
  * is how you get a redirect loop.
  */
 
-/** Seeded by `npm run seed`. Shown so a fresh clone is usable without going
- *  digging in server/seed.mjs — and labelled, so nobody mistakes them for
- *  anything that should survive to production. */
-const DEV_ACCOUNTS = [
-  { role: 'Administrator', email: 'admin@dsac.sp.edu.sg', password: 'admin1234' },
-  { role: 'Staff', email: 'staff@sp.edu.sg', password: 'staff1234' },
-];
-
 export default function LoginPage() {
   const { login } = useAuth();
 
@@ -129,28 +121,6 @@ export default function LoginPage() {
             )}
           </Button>
         </form>
-
-        {/* Development seeds. Deliberately plain text and deliberately labelled
-            — this block is the reminder to delete itself before anything real
-            is hosted, and a prettier presentation would only help it hide. */}
-        <div className="mt-5 rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface)]/70 px-4 py-3.5">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.5px] text-[var(--ink-3)]">
-            Development seed accounts
-          </p>
-          <ul className="mt-2 flex flex-col gap-1.5">
-            {DEV_ACCOUNTS.map(account => (
-              <li key={account.email} className="text-[0.8125rem] leading-[1.4] text-[var(--ink-2)]">
-                <span className="font-semibold text-[var(--ink)]">{account.role}</span>{' '}
-                <span className="font-[family-name:var(--font-dsac-mono)]">
-                  {account.email} / {account.password}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-2 text-[0.75rem] leading-[1.4] text-[var(--ink-3)]">
-            Created by <code>npm run seed</code> for local development only.
-          </p>
-        </div>
       </div>
     </div>
   );
