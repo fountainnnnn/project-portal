@@ -26,6 +26,9 @@ interface Provider {
   model: string;
   envKey: 'DEEPSEEK_API_KEY' | 'OPENAI_API_KEY';
   label: string;
+  /** OpenAI renamed this; every current OpenAI chat model accepts the new
+   *  name, DeepSeek accepts only the old one. */
+  tokenParam: 'max_tokens' | 'max_completion_tokens';
 }
 
 const PROVIDERS: Record<string, Provider> = {
@@ -34,12 +37,14 @@ const PROVIDERS: Record<string, Provider> = {
     model: 'deepseek-chat',
     envKey: 'DEEPSEEK_API_KEY',
     label: 'DeepSeek',
+    tokenParam: 'max_tokens',
   },
   openai: {
-    baseUrl: 'https://api.openai.com',
+    baseUrl: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',
     envKey: 'OPENAI_API_KEY',
     label: 'OpenAI',
+    tokenParam: 'max_completion_tokens',
   },
 };
 
@@ -52,6 +57,30 @@ Rules:
 - Title Case. No sentences, no duplicates, no generic filler like "Teamwork" or "Hard Work".
 - Prefer skills a polytechnic lecturer would recognise as something they teach or practise.
 - If the description is too vague to infer skills, reply with [].`;
+
+/** The request body, minus the provider differences.
+ *
+ *  gpt-5 models reason before answering, and those reasoning tokens are spent
+ *  from the same ceiling as the reply — so a tag list can be truncated by
+ *  thinking it never needed to do. Turning reasoning off also unlocks
+ *  `temperature`, which gpt-5 otherwise pins to 1. Both matter here: this call
+ *  wants a short, repeatable list, not deliberation.
+ *
+ *  `reasoning_effort` is rejected outright by pre-gpt-5 models, so it is sent
+ *  only where it exists. */
+function buildBody(model: string, provider: Provider, text: string): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model,
+    temperature: 0.2,
+    [provider.tokenParam]: 300,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: text },
+    ],
+  };
+  if (/^gpt-5/.test(model)) body.reasoning_effort = 'none';
+  return body;
+}
 
 export interface SuggestResult {
   ok: boolean;
@@ -151,15 +180,7 @@ export function createSkillSuggester(env: Env) {
           'content-type': 'application/json',
           authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model,
-          temperature: 0.2,
-          max_tokens: 300,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: text },
-          ],
-        }),
+        body: JSON.stringify(buildBody(model, provider, text)),
         signal,
       });
     } catch (cause) {

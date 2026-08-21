@@ -19,12 +19,16 @@ const PROVIDERS = {
     model: 'deepseek-chat',
     envKey: 'DEEPSEEK_API_KEY',
     label: 'DeepSeek',
+    tokenParam: 'max_tokens',
   },
   openai: {
-    baseUrl: 'https://api.openai.com',
+    baseUrl: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',
     envKey: 'OPENAI_API_KEY',
     label: 'OpenAI',
+    // OpenAI renamed this; every current OpenAI chat model accepts the new
+    // name, DeepSeek accepts only the old one.
+    tokenParam: 'max_completion_tokens',
   },
 };
 
@@ -79,6 +83,30 @@ function parseTags(raw) {
   return tags;
 }
 
+/** The request body, minus the provider differences.
+ *
+ *  gpt-5 models reason before answering, and those reasoning tokens are spent
+ *  from the same ceiling as the reply — so a tag list can be truncated by
+ *  thinking it never needed to do. Turning reasoning off also unlocks
+ *  `temperature`, which gpt-5 otherwise pins to 1. Both matter here: this call
+ *  wants a short, repeatable list, not deliberation.
+ *
+ *  `reasoning_effort` is rejected outright by pre-gpt-5 models, so it is sent
+ *  only where it exists. */
+function buildBody(model, provider, text) {
+  const body = {
+    model,
+    temperature: 0.2,
+    [provider.tokenParam]: 300,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: text },
+    ],
+  };
+  if (/^gpt-5/.test(model)) body.reasoning_effort = 'none';
+  return body;
+}
+
 export function createSkillSuggester(env = process.env) {
   const name = (env.AI_PROVIDER ?? 'deepseek').toLowerCase();
   const provider = PROVIDERS[name] ?? PROVIDERS.deepseek;
@@ -120,15 +148,7 @@ export function createSkillSuggester(env = process.env) {
           'content-type': 'application/json',
           authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model,
-          temperature: 0.2,
-          max_tokens: 300,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: text },
-          ],
-        }),
+        body: JSON.stringify(buildBody(model, provider, text)),
         signal,
       });
     } catch (cause) {
