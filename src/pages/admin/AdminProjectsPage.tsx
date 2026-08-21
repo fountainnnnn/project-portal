@@ -291,7 +291,7 @@ export default function AdminProjectsPage() {
       ) : null}
 
       {!loading && visible.length > 0 ? (
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((project, index) => (
             <AdminProjectCard
               key={project.id}
