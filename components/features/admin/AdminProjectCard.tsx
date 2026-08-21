@@ -37,7 +37,9 @@ export default function AdminProjectCard({
   return (
     <GlowCard
       index={index}
-      className="dsac-rise flex flex-col p-5"
+      interactive
+      onClick={() => onEdit(project)}
+      className="dsac-rise group flex cursor-pointer flex-col p-5"
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -92,8 +94,23 @@ export default function AdminProjectCard({
       ) : null}
 
       {/* mt-auto so every card in a row lands its action bar on the same line,
-          however long the description above it runs. */}
-      <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+          however long the description above it runs.
+
+          The card body opens the editor, so the bar stops the click here:
+          every control in it does something *other* than edit, and Delete
+          doing both would be a trap. One handler on the bar rather than four
+          on the buttons — the set will grow, and a button added later should
+          not have to remember this.
+
+          The container is deliberately not role="button": it holds four real
+          buttons, and nesting those inside a button role is invalid. Clicking
+          the body is a pointer shortcut, not the only route — keyboard and
+          screen-reader users reach the same editor through Edit, which is
+          already in the tab order. */}
+      <div
+        className="mt-auto flex flex-wrap items-center gap-2 pt-4"
+        onClick={(event) => event.stopPropagation()}
+      >
         <Button size="sm" variant="secondary" onClick={() => onOpenRoster(project)}>
           <UsersThree size={16} aria-hidden />
           Interest

@@ -32,7 +32,9 @@ export default function StaffCard({ entry, index }: StaffCardProps) {
   return (
     <GlowCard
       index={index}
-      className="dsac-rise p-5"
+      interactive={hasDetail}
+      onClick={hasDetail ? () => setExpanded((open) => !open) : undefined}
+      className={`dsac-rise p-5 ${hasDetail ? 'cursor-pointer' : ''}`}
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -54,8 +56,14 @@ export default function StaffCard({ entry, index }: StaffCardProps) {
         </p>
       ) : null}
 
+      {/* The whole card toggles, so this stops the click rather than letting
+          it toggle twice and land back where it started. It stays because it
+          is the affordance — a card that only reveals its handle on hover
+          reads as inert — and because it is the keyboard route in: the card
+          itself is not focusable, and a directory of thirty lecturers should
+          not be thirty tab stops that each hide a real button. */}
       {hasDetail ? (
-        <div className="mt-3">
+        <div className="mt-3" onClick={(event) => event.stopPropagation()}>
           <Button variant="ghost" size="sm" onClick={() => setExpanded((open) => !open)}>
             {expanded ? <CaretDown size={16} aria-hidden /> : <CaretRight size={16} aria-hidden />}
             {expanded ? 'Hide profile' : 'View profile'}
