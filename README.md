@@ -1,5 +1,7 @@
 # SP DSAC Project Portal
 
+> A prototype I proposed to SP's Data Science & Analytics Centre. It is not a tool DSAC uses today, and the projects in the seed data are illustrative.
+
 Singapore Polytechnic's Data Science & Analytics Centre takes on real projects for
 real clients. The projects exist; the problem is that nobody outside the centre
 can see them. A lecturer who teaches computer vision has no way of knowing that
